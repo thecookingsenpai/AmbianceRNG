@@ -27,7 +27,7 @@ class AmbianceRNG:
 		self.FORMAT = pyaudio.paInt16
 		self.CHANNELS = 1
 		self.RATE = 44100
-		self.RECORD_SECONDS = 5
+		self.RECORD_SECONDS = 2
 		self.WAVE_OUTPUT_FILENAME = "seed.wav"
 		self.frames = []
 		self.stream = None
@@ -97,5 +97,9 @@ if __name__ == "__main__":
 	arng.record_seed()
 	arng.save_seed()
 	arng.serialize_seed()
-	rn = arng.get_random_number(1, 100)
-	print(rn)
+	counter = 0
+	while True:
+		rn = arng.get_random_number(1, 100)
+		counter += 1
+		print(f"Produced {counter} random numbers")
+		print(rn)
