@@ -27,7 +27,7 @@ class AmbianceRNG:
 		self.FORMAT = pyaudio.paInt16
 		self.CHANNELS = 1
 		self.RATE = 44100
-		self.RECORD_SECONDS = 2
+		self.RECORD_SECONDS = 5
 		self.WAVE_OUTPUT_FILENAME = "seed.wav"
 		self.frames = []
 		self.stream = None
@@ -36,13 +36,15 @@ class AmbianceRNG:
 
 
 	def record_seed(self):
+        # Opening our device and setting up the stream for recording
 		self.device = pyaudio.PyAudio()
 		self.stream = self.device.open(format=self.FORMAT,
 					channels=self.CHANNELS,
 					rate=self.RATE,
 					input=True,
 					frames_per_buffer=self.CHUNK)
-		print("* detecting ambiental noise...")
+		print("* detecting ambiental noise...")  
+        # Recording ambiental noise
 		for _ in range(int(self.RATE / self.CHUNK * self.RECORD_SECONDS)):
 			data = self.stream.read(self.CHUNK)
 			self.frames.append(data)
@@ -63,42 +65,30 @@ class AmbianceRNG:
 	def serialize_seed(self):
 		print("* serializing ambiental noise... [ ]", end="\b\b", flush=True)
 		counter = 1 # Initialized to 1 to avoid unnecessary assignment later
-		raw_bytes = b''
 		bin_bytes = ''
 		with open(self.WAVE_OUTPUT_FILENAME, 'rb') as f:
-			byte = f.read(1)
-			sign = "|"
-			while byte != b'':
-				if sign == "|":
-					sign = "/"
-				elif sign == "/":
-					sign = "-"
-				elif sign == "-":
-					sign = "\\"
-				elif sign == "\\":
-					sign = "|"
-                # Reading and storing just the raw bytes (aka after the 44th byte)
-				if counter > 44:
-					bin_byte = BitArray(byte)
-					self.bin_bytes += bin_byte.bin
-					print(sign, end="\b", flush=True)
-					#raw_bytes = byte + raw_bytes
-				byte = f.read(1)
-				counter += 1
-		print("\b\b\n* done serializing ambiental noise in %d samples" % counter)
+			all_bytes = f.read()
+			raw_bytes = all_bytes[44:] # Removing the first 44 bytes
+			self.bin_bytes = BitArray(raw_bytes)
+		print("\b\b\n* done serializing ambiental noise")
 		# Logging to file  
 		with open("seed.txt", "w") as f:
-			f.write(raw_bytes)
-  		#print(bin_bytes)
-		#print(raw_bytes)
+			f.write(str(self.bin_bytes))
 	
-	def get_random_number(self, min, max):			
-		hash_object = hashlib.sha256(self.bin_bytes.encode())
+	def get_random_number(self, min, max):
+        # Using an hash representation is way faster than using the whole string			
+		hash_object = hashlib.sha256(str(self.bin_bytes).encode())
 		hex_dig = hash_object.hexdigest()
+		print(f"* using seed {hex_dig}")
+		with open("hash.txt", "a") as f:
+			f.write(f"{hex_dig}\n")
         # Seeding the prng
 		random.seed(hex_dig, version=2)
         # Getting a random number
-		return random.randint(min, max)
+		arn = random.randint(min, max)
+		with open("random.txt", "a+") as f:
+			f.write(f"{arn} ({hex_dig}" + ")\n")
+		return arn
   
 		
 	
