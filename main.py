@@ -87,18 +87,20 @@ class AmbianceRNG:
         # Getting a random number
 		arn = random.randint(min, max)
 		with open("random.txt", "a+") as f:
-			f.write(f"{arn} ({hex_dig}" + ")\n")
+			f.write(f"{arn} ")
+		with open("seeds_history.txt", "a+") as f:
+			f.write(f"{hex_dig}\n")
 		return arn
   
 		
 	
-if __name__ == "__main__":
-	arng = AmbianceRNG()
-	arng.record_seed()
-	arng.save_seed()
-	arng.serialize_seed()
+if __name__ == "__main__":	
 	counter = 0
 	while True:
+		arng = AmbianceRNG()
+		arng.record_seed()
+		arng.save_seed()
+		arng.serialize_seed()
 		rn = arng.get_random_number(1, 100)
 		counter += 1
 		print(f"Produced {counter} random numbers")
